@@ -5,22 +5,22 @@ const agentConfig = {
   1: {
     title: 'Orientações',
     sub: 'Dúvidas e orientações de saúde',
-    greeting: 'Olá! Sou o <strong>IASYS</strong>. Como posso te orientar sobre saúde hoje?',
+    greeting: 'Olá! Sou o <strong>IASYS</strong>, assistente virtual do SUS.<br><br>Para começar, por favor me informe seu <strong>Nome Completo</strong>.',
   },
   2: {
     title: 'Agendamentos',
     sub: 'Agende consultas e exames',
-    greeting: 'Olá! Posso te ajudar a <strong>agendar, remarcar ou cancelar</strong> consultas e exames.',
+    greeting: 'Olá! Posso te ajudar a <strong>agendar, remarcar ou cancelar</strong> consultas e exames.<br><br>Para começar, por favor me informe seu <strong>Nome Completo</strong>.',
   },
   3: {
     title: 'Histórico',
     sub: 'Seu histórico de atendimentos',
-    greeting: 'Olá! Aqui você acessa seu <strong>histórico de atendimentos</strong> no SUS.',
+    greeting: 'Olá! Aqui você acessa seu <strong>histórico de atendimentos</strong> no SUS.<br><br>Para começar, por favor me informe seu <strong>Nome Completo</strong>.',
   },
   4: {
     title: 'Notificações',
     sub: 'Avisos e lembretes do SUS',
-    greeting: 'Olá! Você tem <strong>notificações pendentes</strong>. Como posso te ajudar?',
+    greeting: 'Olá! Você tem <strong>notificações pendentes</strong>.<br><br>Para começar, por favor me informe seu <strong>Nome Completo</strong>.',
   },
 };
 
