@@ -1,4 +1,4 @@
-const API_URL = 'https://chatbot-llama-saude-ihov.onrender.com/chat';
+const API_URL = 'https://chatbot-llama-saude-j6xd.onrender.com/chat';
 const sessionId = crypto.randomUUID();
 
 const agentConfig = {
