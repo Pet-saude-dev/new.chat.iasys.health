@@ -2,29 +2,12 @@ const API_URL = 'https://chatbot-llama-saude-j6xd.onrender.com/chat';
 const sessionId = crypto.randomUUID();
 
 const agentConfig = {
-  1: {
-    title: 'Orientações',
-    sub: 'Dúvidas e orientações de saúde',
-    greeting: 'Olá! Sou o <strong>IASYS</strong>, assistente virtual do SUS.<br><br>Para começar, por favor me informe seu <strong>Nome Completo</strong>.',
-  },
-  2: {
-    title: 'Agendamentos',
-    sub: 'Agende consultas e exames',
-    greeting: 'Olá! Posso te ajudar a <strong>agendar, remarcar ou cancelar</strong> consultas e exames.<br><br>Para começar, por favor me informe seu <strong>Nome Completo</strong>.',
-  },
-  3: {
-    title: 'Histórico',
-    sub: 'Seu histórico de atendimentos',
-    greeting: 'Olá! Aqui você acessa seu <strong>histórico de atendimentos</strong> no SUS.<br><br>Para começar, por favor me informe seu <strong>Nome Completo</strong>.',
-  },
-  4: {
-    title: 'Notificações',
-    sub: 'Avisos e lembretes do SUS',
-    greeting: 'Olá! Você tem <strong>notificações pendentes</strong>.<br><br>Para começar, por favor me informe seu <strong>Nome Completo</strong>.',
-  },
+  1: { title: 'Orientações', sub: 'Dúvidas e orientações de saúde' },
+  2: { title: 'Agendamentos', sub: 'Agende consultas e exames' },
+  3: { title: 'Histórico', sub: 'Seu histórico de atendimentos' },
+  4: { title: 'Notificações', sub: 'Avisos e lembretes do SUS' },
 };
 
-// ── Lê o agente da URL ──
 function getAgentFromURL() {
   const params = new URLSearchParams(window.location.search);
   const id = parseInt(params.get('agent'));
@@ -33,24 +16,49 @@ function getAgentFromURL() {
 
 let activeAgentId = getAgentFromURL();
 
-// ── Inicializa o chat com o agente atual ──
-function initChat(agentId) {
+// ── Inicializa o chat e busca saudação do backend ──
+async function initChat(agentId) {
   const config = agentConfig[agentId];
 
   document.getElementById('chat-title').textContent = config.title;
   document.getElementById('chat-sub').textContent = config.sub;
   document.title = `IASYS · ${config.title}`;
 
-  // Marca o botão ativo
   document.querySelectorAll('.agent-btn').forEach((btn) => {
     btn.classList.toggle('active', parseInt(btn.dataset.agent) === agentId);
   });
 
-  // Limpa e adiciona mensagem inicial
   const chatMessages = document.getElementById('chat-messages');
   chatMessages.innerHTML = '';
   addTimeDivider('Hoje');
-  addMessage('bot', config.greeting);
+
+  // Mostra pontinhos enquanto busca a saudação do backend
+  const typingEl = showTyping();
+
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: '__init__',
+        sessionId: sessionId,
+        agentId: agentId,
+      }),
+    });
+
+    removeTyping(typingEl);
+
+    if (!response.ok) throw new Error(response.statusText);
+
+    const data = await response.json();
+    data.replies.forEach((reply) => {
+      addMessage('bot', processMarkdown(reply));
+    });
+  } catch (error) {
+    removeTyping(typingEl);
+    console.error('Erro ao iniciar chat:', error);
+    addMessage('bot', 'Olá! Sou o <strong>IASYS</strong>, assistente virtual do SUS. Como posso te ajudar?');
+  }
 }
 
 // ── Troca de agente via botão ──
@@ -61,7 +69,6 @@ document.querySelectorAll('.agent-btn').forEach((btn) => {
 
     activeAgentId = newAgentId;
 
-    // Atualiza a URL sem recarregar a página
     const newURL = `${window.location.pathname}?agent=${newAgentId}`;
     history.pushState({ agent: newAgentId }, '', newURL);
 
@@ -69,7 +76,6 @@ document.querySelectorAll('.agent-btn').forEach((btn) => {
   });
 });
 
-// ── Suporte ao botão voltar/avançar do navegador ──
 window.addEventListener('popstate', () => {
   activeAgentId = getAgentFromURL();
   initChat(activeAgentId);
