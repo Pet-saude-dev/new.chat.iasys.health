@@ -16,6 +16,16 @@ function getAgentFromURL() {
 
 let activeAgentId = getAgentFromURL();
 
+// ── Atualiza o greeting da home com o nome do usuário ──
+function updateHomeGreeting(html) {
+  const match = html.match(/Olá,?\s*<strong>(.*?)<\/strong>/i);
+  if (match) {
+    const nome = match[1].split(' ')[0];
+    document.getElementById('home-greeting').innerHTML =
+      `Olá, <span style="color:#0056b3">${nome}</span>!<br>No que posso te ajudar hoje?`;
+  }
+}
+
 // ── Inicializa o chat e busca saudação do backend ──
 async function initChat(agentId) {
   const config = agentConfig[agentId];
@@ -32,7 +42,6 @@ async function initChat(agentId) {
   chatMessages.innerHTML = '';
   addTimeDivider('Hoje');
 
-  // Mostra pontinhos enquanto busca a saudação do backend
   const typingEl = showTyping();
 
   try {
@@ -54,6 +63,8 @@ async function initChat(agentId) {
     data.replies.forEach((reply) => {
       addMessage('bot', processMarkdown(reply));
     });
+
+    if (data.replies.length > 0) updateHomeGreeting(processMarkdown(data.replies[0]));
   } catch (error) {
     removeTyping(typingEl);
     console.error('Erro ao iniciar chat:', error);
