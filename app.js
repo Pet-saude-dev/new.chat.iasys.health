@@ -15,6 +15,7 @@ function getAgentFromURL() {
 }
 
 let activeAgentId = getAgentFromURL();
+let hasStarted = false;
 
 // ── Atualiza o greeting da home com o nome do usuário ──
 function updateHomeGreeting(html) {
@@ -28,6 +29,7 @@ function updateHomeGreeting(html) {
 
 // ── Inicializa o chat e busca saudação do backend ──
 async function initChat(agentId) {
+  hasStarted = true;
   const config = agentConfig[agentId];
 
   document.getElementById('chat-title').textContent = config.title;
@@ -71,6 +73,13 @@ async function initChat(agentId) {
     addMessage('bot', 'Olá! Sou o <strong>IASYS</strong>, assistente virtual do SUS. Como posso te ajudar?');
   }
 }
+
+// ── Garante que o chat só é iniciado (busca a saudação) quando o usuário mandar a primeira mensagem ──
+async function ensureChatStarted() {
+  if (hasStarted) return;
+  await initChat(activeAgentId);
+}
+window.ensureChatStarted = ensureChatStarted;
 
 // ── Troca de agente via botão ──
 document.querySelectorAll('.agent-btn').forEach((btn) => {
@@ -203,5 +212,6 @@ function processMarkdown(text) {
   return t;
 }
 
-// ── Inicia ──
-initChat(activeAgentId);
+// Observação: initChat() não é mais chamado automaticamente ao carregar a página.
+// Ele só roda quando o usuário envia a primeira mensagem (via ensureChatStarted,
+// chamado em enterChat() no index.html) ou quando troca de agente pela barra lateral.

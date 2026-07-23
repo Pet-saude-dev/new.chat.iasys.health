@@ -133,9 +133,10 @@
         document.getElementById('drawer-overlay').classList.remove('open');
       }
 
-      function enterChat(prefillMsg) {
+      async function enterChat(prefillMsg) {
         document.getElementById('home-screen').classList.add('hidden');
         document.getElementById('chat-area').classList.remove('hidden');
+        await window.ensureChatStarted();
         if (prefillMsg) {
           const input = document.getElementById('message-input');
           input.value = prefillMsg;
