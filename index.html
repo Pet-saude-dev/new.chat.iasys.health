@@ -94,29 +94,6 @@
             <img src="image/robo.png" alt="IASYS" onerror="this.style.display='none'" />
           </div>
           <div id="home-greeting">Olá! No que posso<br>te ajudar hoje?</div>
-          <div id="home-quick">
-            <button class="home-quick-btn" data-msg="Quero informar um problema de saúde">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="18" height="18"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-              <div>
-                <div class="hq-label">Informar um problema de saúde</div>
-                <div class="hq-sub">Sintomas, dores e mal-estar</div>
-              </div>
-            </button>
-            <button class="home-quick-btn" data-msg="Quero agendar ou confirmar uma consulta">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="18" height="18"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              <div>
-                <div class="hq-label">Agendar ou confirmar consulta</div>
-                <div class="hq-sub">Consultas e procedimentos</div>
-              </div>
-            </button>
-            <button class="home-quick-btn" data-msg="Preciso de orientações rápidas de saúde">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <div>
-                <div class="hq-label">Orientações rápidas</div>
-                <div class="hq-sub">Dúvidas e informações de saúde</div>
-              </div>
-            </button>
-          </div>
           <div id="home-input-wrap">
             <div id="home-input-pill">
               <input type="text" id="home-input" placeholder="Peça ao assistente de saúde..." autocomplete="off" />
@@ -155,13 +132,6 @@
       function closeDrawer() {
         document.getElementById('drawer-overlay').classList.remove('open');
       }
-
-      document.querySelectorAll('.home-quick-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const msg = btn.dataset.msg;
-          enterChat(msg);
-        });
-      });
 
       function enterChat(prefillMsg) {
         document.getElementById('home-screen').classList.add('hidden');
