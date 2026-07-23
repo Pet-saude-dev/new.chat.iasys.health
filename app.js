@@ -27,15 +27,40 @@ function updateHomeGreeting(html) {
   }
 }
 
-// ── Inicializa o chat e busca saudação do backend ──
-async function initChat(agentId) {
-  hasStarted = true;
+function fetchGreeting(agentId) {
   const config = agentConfig[agentId];
-
   document.getElementById('chat-title').textContent = config.title;
   document.getElementById('chat-sub').textContent = config.sub;
   document.title = `IASYS · ${config.title}`;
 
+  return fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: '__init__',
+      sessionId: sessionId,
+      agentId: agentId,
+    }),
+  })
+    .then((response) => {
+      if (!response.ok) throw new Error(response.statusText);
+      return response.json();
+    })
+    .then((data) => {
+      if (data.replies.length > 0) updateHomeGreeting(processMarkdown(data.replies[0]));
+      return data.replies;
+    })
+    .catch((error) => {
+      console.error('Erro ao buscar saudação:', error);
+      return ['Olá! Sou o <strong>IASYS</strong>, assistente virtual do SUS. Como posso te ajudar?'];
+    });
+}
+
+// Dispara a busca assim que o script carrega (silenciosa, só para ter o nome pronto)
+let greetingPromise = fetchGreeting(activeAgentId);
+
+// ── Renderiza a saudação já buscada dentro do chat (usado quando o usuário começa a conversar) ──
+async function initChat(agentId) {
   document.querySelectorAll('.agent-btn').forEach((btn) => {
     btn.classList.toggle('active', parseInt(btn.dataset.agent) === agentId);
   });
@@ -45,39 +70,34 @@ async function initChat(agentId) {
   addTimeDivider('Hoje');
 
   const typingEl = showTyping();
+  const replies = await fetchGreeting(agentId);
+  removeTyping(typingEl);
 
-  try {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        message: '__init__',
-        sessionId: sessionId,
-        agentId: agentId,
-      }),
-    });
-
-    removeTyping(typingEl);
-
-    if (!response.ok) throw new Error(response.statusText);
-
-    const data = await response.json();
-    data.replies.forEach((reply) => {
-      addMessage('bot', processMarkdown(reply));
-    });
-
-    if (data.replies.length > 0) updateHomeGreeting(processMarkdown(data.replies[0]));
-  } catch (error) {
-    removeTyping(typingEl);
-    console.error('Erro ao iniciar chat:', error);
-    addMessage('bot', 'Olá! Sou o <strong>IASYS</strong>, assistente virtual do SUS. Como posso te ajudar?');
-  }
+  replies.forEach((reply) => {
+    addMessage('bot', processMarkdown(reply));
+  });
 }
 
-// ── Garante que o chat só é iniciado (busca a saudação) quando o usuário mandar a primeira mensagem ──
+// ── Garante que o chat só é exibido (com a saudação já buscada) quando o usuário mandar a primeira mensagem ──
 async function ensureChatStarted() {
   if (hasStarted) return;
-  await initChat(activeAgentId);
+  hasStarted = true;
+
+  document.querySelectorAll('.agent-btn').forEach((btn) => {
+    btn.classList.toggle('active', parseInt(btn.dataset.agent) === activeAgentId);
+  });
+
+  const chatMessages = document.getElementById('chat-messages');
+  chatMessages.innerHTML = '';
+  addTimeDivider('Hoje');
+
+  const typingEl = showTyping();
+  const replies = await greetingPromise;
+  removeTyping(typingEl);
+
+  replies.forEach((reply) => {
+    addMessage('bot', processMarkdown(reply));
+  });
 }
 window.ensureChatStarted = ensureChatStarted;
 
@@ -88,6 +108,7 @@ document.querySelectorAll('.agent-btn').forEach((btn) => {
     if (newAgentId === activeAgentId) return;
 
     activeAgentId = newAgentId;
+    hasStarted = true;
 
     const newURL = `${window.location.pathname}?agent=${newAgentId}`;
     history.pushState({ agent: newAgentId }, '', newURL);
@@ -98,6 +119,7 @@ document.querySelectorAll('.agent-btn').forEach((btn) => {
 
 window.addEventListener('popstate', () => {
   activeAgentId = getAgentFromURL();
+  hasStarted = true;
   initChat(activeAgentId);
 });
 
