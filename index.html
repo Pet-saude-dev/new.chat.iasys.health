@@ -15,6 +15,11 @@
           <img src="image/robo.png" alt="IASYS" id="sidebar-logo-img" onerror="this.style.display='none'" />
         </div>
         <nav id="sidebar-nav">
+
+          <button class="agent-btn" data-agent="5" title="Menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            <span>Menu</span>
+          </button>
           <button class="agent-btn" data-agent="1" title="Orientações">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             <span>Orientações</span>
@@ -52,6 +57,10 @@
           </div>
           <div id="drawer-label">Seções</div>
           <nav id="drawer-nav">
+            <button class="drawer-item agent-btn" data-agent="5">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+              Menu
+            </button>
             <button class="drawer-item agent-btn" data-agent="1">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
               Orientações
@@ -125,6 +134,38 @@
     </div>
 
     <script src="app.js"></script>
-    <script src="script.js"></script>
+    <script>
+      function openDrawer() {
+        document.getElementById('drawer-overlay').classList.add('open');
+      }
+      function closeDrawer() {
+        document.getElementById('drawer-overlay').classList.remove('open');
+      }
+
+      async function enterChat(prefillMsg) {
+        document.getElementById('home-screen').classList.add('hidden');
+        document.getElementById('chat-area').classList.remove('hidden');
+        await window.ensureChatStarted();
+        if (prefillMsg) {
+          const input = document.getElementById('message-input');
+          input.value = prefillMsg;
+          document.getElementById('message-form').requestSubmit();
+        }
+      }
+
+      document.getElementById('home-send-btn').addEventListener('click', () => {
+        const val = document.getElementById('home-input').value.trim();
+        if (val) enterChat(val);
+      });
+
+      document.getElementById('home-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          const val = e.target.value.trim();
+          if (val) enterChat(val);
+        }
+      });
+
+      enterChat();
+    </script>
   </body>
 </html>

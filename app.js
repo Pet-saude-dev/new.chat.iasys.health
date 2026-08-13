@@ -6,18 +6,28 @@ const agentConfig = {
   2: { title: 'Agendamentos', sub: 'Agende consultas e exames' },
   3: { title: 'Histórico', sub: 'Seu histórico de atendimentos' },
   4: { title: 'Notificações', sub: 'Avisos e lembretes do SUS' },
+  5: { title: 'Menu', sub: 'Menu principal de serviços' },
+};
+
+// Mensagem que cada botão envia automaticamente ao ser clicado
+// null = apenas abre o chat sem enviar nada (mostra o menu normalmente)
+const agentDirectMessage = {
+  1: '1',    // Orientações rápidas
+  2: '5',    // Agendar consulta
+  3: null,   // Histórico – sem ação por enquanto
+  4: null,   // Notificações – sem ação por enquanto
+  5: null,   // Menu – apenas abre o chat com o menu
 };
 
 function getAgentFromURL() {
   const params = new URLSearchParams(window.location.search);
   const id = parseInt(params.get('agent'));
-  return agentConfig[id] ? id : 1;
+  return agentConfig[id] ? id : 5;
 }
 
 let activeAgentId = getAgentFromURL();
 let hasStarted = false;
 
-// ── Atualiza o greeting da home com o nome do usuário ──
 function updateHomeGreeting(html) {
   const match = html.match(/Olá,?\s*<strong>(.*?)<\/strong>/i);
   if (match) {
@@ -28,7 +38,7 @@ function updateHomeGreeting(html) {
 }
 
 function fetchGreeting(agentId) {
-  const config = agentConfig[agentId];
+  const config = agentConfig[agentId] || agentConfig[5];
   document.getElementById('chat-title').textContent = config.title;
   document.getElementById('chat-sub').textContent = config.sub;
   document.title = `IASYS · ${config.title}`;
@@ -56,10 +66,8 @@ function fetchGreeting(agentId) {
     });
 }
 
-// Dispara a busca assim que o script carrega (silenciosa, só para ter o nome pronto)
 let greetingPromise = fetchGreeting(activeAgentId);
 
-// ── Renderiza a saudação já buscada dentro do chat (usado quando o usuário começa a conversar) ──
 async function initChat(agentId) {
   document.querySelectorAll('.agent-btn').forEach((btn) => {
     btn.classList.toggle('active', parseInt(btn.dataset.agent) === agentId);
@@ -76,9 +84,13 @@ async function initChat(agentId) {
   replies.forEach((reply) => {
     addMessage('bot', processMarkdown(reply));
   });
+
+  const directMsg = agentDirectMessage[agentId];
+  if (directMsg) {
+    await sendMessage(directMsg, false); // false = não exibe a mensagem do usuário
+  }
 }
 
-// ── Garante que o chat só é exibido (com a saudação já buscada) quando o usuário mandar a primeira mensagem ──
 async function ensureChatStarted() {
   if (hasStarted) return;
   hasStarted = true;
@@ -101,37 +113,9 @@ async function ensureChatStarted() {
 }
 window.ensureChatStarted = ensureChatStarted;
 
-// ── Troca de agente via botão ──
-document.querySelectorAll('.agent-btn').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    const newAgentId = parseInt(btn.dataset.agent);
-    if (newAgentId === activeAgentId) return;
-
-    activeAgentId = newAgentId;
-    hasStarted = true;
-
-    const newURL = `${window.location.pathname}?agent=${newAgentId}`;
-    history.pushState({ agent: newAgentId }, '', newURL);
-
-    initChat(newAgentId);
-  });
-});
-
-window.addEventListener('popstate', () => {
-  activeAgentId = getAgentFromURL();
-  hasStarted = true;
-  initChat(activeAgentId);
-});
-
-// ── Envio de mensagem ──
-document.getElementById('message-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const input = document.getElementById('message-input');
-  const text = input.value.trim();
-  if (!text) return;
-
-  addMessage('user', text);
-  input.value = '';
+// ── Função central de envio de mensagem ──
+async function sendMessage(text, showUserBubble = true) {
+  if (showUserBubble) addMessage('user', text);
 
   const typingEl = showTyping();
 
@@ -159,6 +143,40 @@ document.getElementById('message-form').addEventListener('submit', async (e) => 
     console.error('Erro:', error);
     addMessage('bot', 'Desculpe, não consegui me conectar ao servidor. Tente novamente mais tarde.');
   }
+}
+
+document.querySelectorAll('.agent-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const newAgentId = parseInt(btn.dataset.agent);
+    if (newAgentId === activeAgentId && hasStarted) return;
+
+    activeAgentId = newAgentId;
+    hasStarted = true;
+
+    document.getElementById('home-screen').classList.add('hidden');
+    document.getElementById('chat-area').classList.remove('hidden');
+
+    const newURL = `${window.location.pathname}?agent=${newAgentId}`;
+    history.pushState({ agent: newAgentId }, '', newURL);
+
+    initChat(newAgentId);
+    closeDrawer();
+  });
+});
+
+window.addEventListener('popstate', () => {
+  activeAgentId = getAgentFromURL();
+  hasStarted = true;
+  initChat(activeAgentId);
+});
+
+document.getElementById('message-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const input = document.getElementById('message-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  await sendMessage(text, true);
 });
 
 function addTimeDivider(label) {
@@ -233,7 +251,3 @@ function processMarkdown(text) {
   t = t.replace(/\n/g, '<br>');
   return t;
 }
-
-// Observação: initChat() não é mais chamado automaticamente ao carregar a página.
-// Ele só roda quando o usuário envia a primeira mensagem (via ensureChatStarted,
-// chamado em enterChat() no index.html) ou quando troca de agente pela barra lateral.
